@@ -21,9 +21,10 @@ export default function DiscoverPage() {
   const [matches, setMatches] = useState<IMatch[]>([]);
   const [loadingMatches, setLoadingMatches] = useState<boolean>(true);
 
-  // Swipe in-flight lock to prevent double-swiping
+  // Swipe in-flight lock and visual animation state
   const [isSwiping, setIsSwiping] = useState<boolean>(false);
   const [swipeExitX, setSwipeExitX] = useState<number>(0);
+  const [activeStamp, setActiveStamp] = useState<"like" | "pass" | null>(null);
 
   // Match Modal state
   const [matchModalOpen, setMatchModalOpen] = useState<boolean>(false);
@@ -87,50 +88,71 @@ export default function DiscoverPage() {
   }, [fetchFeed, fetchMatches]);
 
   // Handle Swipe (drag or button click)
-  const handleSwipe = async (action: SwipeAction) => {
-    if (isSwiping || profiles.length === 0) return;
+  const handleSwipe = useCallback(
+    async (action: SwipeAction) => {
+      if (isSwiping || profiles.length === 0) return;
 
-    const currentProfile = profiles[0];
-    if (!currentProfile) return;
+      const currentProfile = profiles[0];
+      if (!currentProfile) return;
 
-    setIsSwiping(true);
-    setSwipeExitX(action === "like" ? 450 : -450);
+      setIsSwiping(true);
+      setActiveStamp(action);
+      setSwipeExitX(action === "like" ? 480 : -480);
 
-    // Synchronize animation: briefly wait for exit animation before calling backend
-    try {
-      const res = await fetch("/api/swipe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          profileId: currentProfile.id,
-          action,
-        }),
-      });
-
-      const data = await res.json();
-
-      // Remove the swiped profile from the queue
-      setProfiles((prev) => prev.slice(1));
-
-      if (data.success && data.isMatch) {
-        // Backend confirmed mutual match!
-        setLastMatchedProfile({
-          name: data.match?.profile?.name || currentProfile.name,
-          age: data.match?.profile?.age || currentProfile.age,
-          photo: data.match?.profile?.photo || currentProfile.photo,
-          city: data.match?.profile?.city || currentProfile.city,
+      try {
+        const res = await fetch("/api/swipe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profileId: currentProfile.id,
+            action,
+          }),
         });
-        setMatchModalOpen(true);
-        // Refresh matches in background
-        fetchMatches();
+
+        const data = await res.json();
+
+        // Advance to the next profile
+        setProfiles((prev) => prev.slice(1));
+
+        if (data.success && data.isMatch) {
+          // Backend confirmed mutual match!
+          setLastMatchedProfile({
+            name: data.match?.profile?.name || currentProfile.name,
+            age: data.match?.profile?.age || currentProfile.age,
+            photo: data.match?.profile?.photo || currentProfile.photo,
+            city: data.match?.profile?.city || currentProfile.city,
+          });
+          setMatchModalOpen(true);
+          // Refresh matches list
+          fetchMatches();
+        }
+      } catch (err) {
+        console.error("Swipe submission error:", err);
+      } finally {
+        setIsSwiping(false);
+        setActiveStamp(null);
+        setSwipeExitX(0);
       }
-    } catch (err) {
-      console.error("Swipe submission error:", err);
-    } finally {
-      setIsSwiping(false);
-      setSwipeExitX(0);
-    }
-  };
+    },
+    [isSwiping, profiles, fetchMatches]
+  );
+
+  // Keyboard navigation: Left Arrow -> Pass, Right Arrow -> Like
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (activeTab !== "discover" || matchModalOpen) return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        handleSwipe("pass");
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        handleSwipe("like");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeTab, matchModalOpen, handleSwipe]);
 
   // Reset demo feed
   const handleResetDemo = async () => {
@@ -262,6 +284,7 @@ export default function DiscoverPage() {
                           isFront={true}
                           onSwipe={handleSwipe}
                           isSwiping={isSwiping}
+                          activeStamp={activeStamp}
                         />
                       </motion.div>
                     )}
@@ -275,7 +298,7 @@ export default function DiscoverPage() {
                     disabled={isSwiping || profiles.length === 0}
                   />
                   <p className="text-center text-[11px] text-slate-400">
-                    Drag left to Pass • Drag right to Like
+                    Drag left to Pass • Drag right to Like • Keyboard: ← / →
                   </p>
                 </div>
               </div>

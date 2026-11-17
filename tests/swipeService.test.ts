@@ -15,7 +15,6 @@ let mongod: MongoMemoryServer;
 const DEMO_USER_ID = "demo_test_user_001";
 
 beforeAll(async () => {
-  // Use existing system mongod binary if available
   process.env.MONGOMS_SYSTEM_BINARY = "C:\\Program Files\\MongoDB\\Server\\8.2\\bin\\mongod.exe";
   mongod = await MongoMemoryServer.create();
   const uri = mongod.getUri();
@@ -176,11 +175,7 @@ describe("Coy Discover Business Logic & Privacy Protection", () => {
     // Check matches persist across refresh
     const refreshedMatches = await getUserMatches(DEMO_USER_ID);
     expect(refreshedMatches.length).toBe(1);
-    expect(refhedMatches_profileName(refreshedMatches)).toBe("Profile 1");
-
-    function refhedMatches_profileName(matches: typeof refreshedMatches) {
-      return matches[0].profile.name;
-    }
+    expect(refreshedMatches[0].profile.name).toBe("Profile 1");
   });
 
   // SCENARIO 5
@@ -249,9 +244,9 @@ describe("Coy Discover Business Logic & Privacy Protection", () => {
     const item = feed[0];
 
     // Must NOT contain likedCurrentUser
-    expect((item as Record<string, unknown>).likedCurrentUser).toBeUndefined();
+    expect((item as unknown as Record<string, unknown>).likedCurrentUser).toBeUndefined();
     // Must NOT contain internal mongo fields
-    expect((item as Record<string, unknown>).__v).toBeUndefined();
+    expect((item as unknown as Record<string, unknown>).__v).toBeUndefined();
     // Must contain safe public fields
     expect(item.name).toBe("Secret Admirer");
     expect(item.id).toBeDefined();
@@ -260,6 +255,11 @@ describe("Coy Discover Business Logic & Privacy Protection", () => {
 
   // SCENARIO 8: Input Validations
   it("Scenario 8: Input validations reject malformed actions, invalid ObjectIds, or self-swiping", async () => {
+    // Self-swiping check
+    await expect(
+      recordSwipe(DEMO_USER_ID, DEMO_USER_ID, "like")
+    ).rejects.toThrow("Users cannot swipe on their own profile");
+
     // Invalid action
     await expect(
       recordSwipe(DEMO_USER_ID, new mongoose.Types.ObjectId().toString(), "superlike" as any)
@@ -275,10 +275,5 @@ describe("Coy Discover Business Logic & Privacy Protection", () => {
     await expect(
       recordSwipe(DEMO_USER_ID, nonExistentId, "like")
     ).rejects.toThrow("Profile not found");
-
-    // Self-swiping
-    await expect(
-      recordSwipe(DEMO_USER_ID, DEMO_USER_ID, "like")
-    ).rejects.toThrow("Invalid or missing profile ID");
   });
 });

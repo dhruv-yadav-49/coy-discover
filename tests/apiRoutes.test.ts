@@ -47,7 +47,8 @@ describe("API Route Handlers Integration Tests", () => {
       likedCurrentUser: true, // Should NEVER be exposed
     });
 
-    const response = await getFeedHandler();
+    const req = new NextRequest("http://localhost:3000/api/feed");
+    const response = await getFeedHandler(req);
     expect(response.status).toBe(200);
 
     const data = await response.json();
@@ -122,6 +123,26 @@ describe("API Route Handlers Integration Tests", () => {
     expect(data.error).toContain("already been swiped on");
   });
 
+  it("POST /api/swipe rejects invalid or malformed JSON payloads with 400", async () => {
+    // Malformed JSON / empty body
+    const reqNull = new NextRequest("http://localhost:3000/api/swipe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(null),
+    });
+    const resNull = await postSwipeHandler(reqNull);
+    expect(resNull.status).toBe(400);
+
+    // Missing action
+    const reqMissingAction = new NextRequest("http://localhost:3000/api/swipe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profileId: new mongoose.Types.ObjectId().toString() }),
+    });
+    const resMissingAction = await postSwipeHandler(reqMissingAction);
+    expect(resMissingAction.status).toBe(400);
+  });
+
   it("GET /api/matches returns only confirmed mutual matches", async () => {
     const p1 = await Profile.create({
       name: "Matched User",
@@ -138,7 +159,8 @@ describe("API Route Handlers Integration Tests", () => {
       profileId: p1._id,
     });
 
-    const response = await getMatchesHandler();
+    const req = new NextRequest("http://localhost:3000/api/matches");
+    const response = await getMatchesHandler(req);
     expect(response.status).toBe(200);
 
     const data = await response.json();

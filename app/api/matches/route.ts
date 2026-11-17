@@ -1,15 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { DEMO_USER_ID } from "@/lib/constants";
 import { getUserMatches, ValidationError } from "@/lib/swipeService";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const userId = req.headers.get("x-user-id") || DEMO_USER_ID;
+
     await connectToDatabase();
 
-    const matches = await getUserMatches(DEMO_USER_ID);
+    const matches = await getUserMatches(userId);
 
     return NextResponse.json({
       success: true,

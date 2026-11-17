@@ -48,11 +48,11 @@ export async function getFeedProfiles(userId: string): Promise<PublicProfile[]> 
   const swipedProfileIds = swipedRecords.map((s) => s.profileId);
 
   // Fetch profiles excluding swiped ones
-  // Explicitly exclude likedCurrentUser and __v from projection for defense-in-depth privacy
+  // Note: likedCurrentUser has select: false on schema, and we exclude __v as well
   const profiles = await Profile.find({
     _id: { $nin: swipedProfileIds },
   })
-    .select("-likedCurrentUser -__v")
+    .select("-__v")
     .sort({ createdAt: -1 })
     .lean();
 
@@ -91,31 +91,40 @@ export async function recordSwipe(
   action: SwipeAction
 ): Promise<RecordSwipeResult> {
   // 1. Validate inputs
-  if (!userId || typeof userId !== "string") {
+  if (!userId || typeof userId !== "string" || userId.trim() === "") {
     throw new ValidationError("Valid user ID is required", 400);
   }
 
-  if (!profileId || typeof profileId !== "string" || !mongoose.Types.ObjectId.isValid(profileId)) {
+  if (!profileId || typeof profileId !== "string" || profileId.trim() === "") {
     throw new ValidationError("Invalid or missing profile ID", 400);
   }
 
-  if (action !== "like" && action !== "pass") {
-    throw new ValidationError("Action must be either 'like' or 'pass'", 400);
-  }
+  const cleanUserId = userId.trim();
+  const cleanProfileId = profileId.trim();
 
-  if (userId === profileId) {
+  // Self-swiping validation check
+  if (cleanUserId === cleanProfileId) {
     throw new ValidationError("Users cannot swipe on their own profile", 400);
   }
 
-  // 2. Fetch the target profile (including backend-only likedCurrentUser for evaluation)
-  const profile = await Profile.findById(profileId);
+  if (!mongoose.Types.ObjectId.isValid(cleanProfileId)) {
+    throw new ValidationError("Invalid or missing profile ID", 400);
+  }
+
+  const normalizedAction = (typeof action === "string" ? action.trim().toLowerCase() : "") as SwipeAction;
+  if (normalizedAction !== "like" && normalizedAction !== "pass") {
+    throw new ValidationError("Action must be either 'like' or 'pass'", 400);
+  }
+
+  // 2. Fetch the target profile (explicitly requesting +likedCurrentUser since it has select: false)
+  const profile = await Profile.findById(cleanProfileId).select("+likedCurrentUser");
   if (!profile) {
     throw new ValidationError("Profile not found", 404);
   }
 
   // 3. Check for existing swipe to prevent duplicate submissions
   const existingSwipe = await Swipe.findOne({
-    userId,
+    userId: cleanUserId,
     profileId: profile._id,
   });
 
@@ -126,27 +135,27 @@ export async function recordSwipe(
   // 4. Save the swipe record in database
   try {
     await Swipe.create({
-      userId,
+      userId: cleanUserId,
       profileId: profile._id,
-      action,
+      action: normalizedAction,
     });
   } catch (err: unknown) {
     // Handle potential concurrent race condition duplicate key error (E11000)
     if (typeof err === "object" && err !== null && "code" in err && (err as { code: number }).code === 11000) {
-      throw new ValidationError("Duplicate swipe detected", 409);
+      throw new ValidationError("This profile has already been swiped on", 409);
     }
     throw err;
   }
 
   // 5. Evaluate matching condition:
   // Both parties must like each other (action === "like" AND profile.likedCurrentUser === true)
-  const isMutualMatch = action === "like" && profile.likedCurrentUser === true;
+  const isMutualMatch = normalizedAction === "like" && profile.likedCurrentUser === true;
 
   if (isMutualMatch) {
     // 6. Record match in database with upsert to prevent duplicates
     const matchRecord = await Match.findOneAndUpdate(
-      { userId, profileId: profile._id },
-      { $setOnInsert: { userId, profileId: profile._id, createdAt: new Date() } },
+      { userId: cleanUserId, profileId: profile._id },
+      { $setOnInsert: { userId: cleanUserId, profileId: profile._id, createdAt: new Date() } },
       { upsert: true, new: true }
     );
 
@@ -177,14 +186,14 @@ export async function recordSwipe(
  * Only returns verified mutual matches stored in the Match collection.
  */
 export async function getUserMatches(userId: string): Promise<IMatch[]> {
-  if (!userId || typeof userId !== "string") {
+  if (!userId || typeof userId !== "string" || userId.trim() === "") {
     throw new ValidationError("Valid user ID is required", 400);
   }
 
-  const matches = await Match.find({ userId })
+  const matches = await Match.find({ userId: userId.trim() })
     .populate({
       path: "profileId",
-      select: "-likedCurrentUser -__v",
+      select: "-__v",
     })
     .sort({ createdAt: -1 })
     .lean();

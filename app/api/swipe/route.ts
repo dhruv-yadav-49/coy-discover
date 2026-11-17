@@ -18,6 +18,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        { success: false, error: "Request body must be a valid JSON object" },
+        { status: 400 }
+      );
+    }
+
     const { profileId, action } = body;
 
     if (!profileId || !action) {
@@ -27,9 +34,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const userId = req.headers.get("x-user-id") || DEMO_USER_ID;
+
     await connectToDatabase();
 
-    const result = await recordSwipe(DEMO_USER_ID, profileId, action);
+    const result = await recordSwipe(userId, profileId, action);
 
     return NextResponse.json({
       success: true,

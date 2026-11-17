@@ -18,6 +18,7 @@ const ProfileSchema = new Schema<IProfileDocument>(
       type: String,
       required: [true, "Name is required"],
       trim: true,
+      index: true,
     },
     age: {
       type: Number,
@@ -48,7 +49,10 @@ const ProfileSchema = new Schema<IProfileDocument>(
     likedCurrentUser: {
       type: Boolean,
       default: false,
-      // BACKEND-ONLY: Never expose this field in public API responses
+      // BACKEND-ONLY & PRIVACY SAFEGUARD:
+      // Setting select: false guarantees this field is excluded by default in all Mongoose queries
+      // unless explicitly requested with .select("+likedCurrentUser") in backend matching logic.
+      select: false,
     },
   },
   {
