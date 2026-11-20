@@ -52,6 +52,7 @@ export interface FeedApiResponse {
 export interface SwipeApiRequest {
   profileId: string;
   action: SwipeAction;
+  requestId?: string;
 }
 
 export interface SwipeApiResponse {

@@ -26,22 +26,37 @@ export async function POST(req: NextRequest) {
     }
 
     const { profileId, action } = body;
+    const requestId =
+      req.headers.get("x-request-id") ||
+      body.requestId ||
+      `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const startTime = Date.now();
 
     if (!profileId || !action) {
       return NextResponse.json(
-        { success: false, error: "Both 'profileId' and 'action' are required fields" },
+        { success: false, error: "Both 'profileId' and 'action' are required fields", requestId },
         { status: 400 }
       );
     }
 
     const userId = req.headers.get("x-user-id") || DEMO_USER_ID;
 
+    console.log(
+      `[BACKEND_SWIPE_START] [${requestId}] userId=${userId}, profileId=${profileId}, action=${action}, at=${new Date(startTime).toISOString()}`
+    );
+
     await connectToDatabase();
 
     const result = await recordSwipe(userId, profileId, action);
+    const duration = Date.now() - startTime;
+
+    console.log(
+      `[BACKEND_SWIPE_RESULT] [${requestId}] isMatch=${result.isMatch}, matchCreated=${!!result.match}, duration=${duration}ms`
+    );
 
     return NextResponse.json({
       success: true,
+      requestId,
       isMatch: result.isMatch,
       ...(result.match ? { match: result.match } : {}),
     });

@@ -18,6 +18,13 @@ async function seed() {
     await mongoose.connect(MONGODB_URI);
     console.log("✅ Successfully connected to MongoDB.");
 
+    // Clean up any test/stale profiles not belonging to mockProfiles
+    const validNames = mockProfiles.map((p) => p.name);
+    const staleResult = await Profile.deleteMany({ name: { $nin: validNames } });
+    if (staleResult.deletedCount > 0) {
+      console.log(`🧹 Cleaned up ${staleResult.deletedCount} extraneous profiles.`);
+    }
+
     let insertedCount = 0;
     let updatedCount = 0;
 

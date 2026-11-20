@@ -53,7 +53,7 @@ export async function getFeedProfiles(userId: string): Promise<PublicProfile[]> 
     _id: { $nin: swipedProfileIds },
   })
     .select("-__v")
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: 1 })
     .lean();
 
   return profiles.map((p) => sanitizeProfile(p));
@@ -150,6 +150,10 @@ export async function recordSwipe(
   // 5. Evaluate matching condition:
   // Both parties must like each other (action === "like" AND profile.likedCurrentUser === true)
   const isMutualMatch = normalizedAction === "like" && profile.likedCurrentUser === true;
+
+  console.log(
+    `[SWIPE_SERVICE_EVAL] Target: "${profile.name}" (${cleanProfileId}), action=${normalizedAction}, likedCurrentUser=${profile.likedCurrentUser} => isMutualMatch=${isMutualMatch}`
+  );
 
   if (isMutualMatch) {
     // 6. Record match in database with upsert to prevent duplicates

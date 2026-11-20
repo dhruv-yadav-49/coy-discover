@@ -9,6 +9,7 @@ export interface SeedProfile {
 }
 
 export const mockProfiles: SeedProfile[] = [
+  // Cluster 1: Consecutive mutual likes (3 in a row -> tests Scenario 2: Consecutive Matches)
   {
     name: "Aarav Sharma",
     age: 23,
@@ -16,7 +17,7 @@ export const mockProfiles: SeedProfile[] = [
     bio: "Software developer who loves travelling, street food, and indie acoustic music. Always planning the next road trip.",
     city: "Bengaluru",
     interests: ["Coding", "Travel", "Music", "Photography"],
-    likedCurrentUser: true, // Will match if liked
+    likedCurrentUser: true, // Mutual Match #1
   },
   {
     name: "Priya Nair",
@@ -25,16 +26,7 @@ export const mockProfiles: SeedProfile[] = [
     bio: "Architecture student at CEPT. Coffee enthusiast, watercolor painter, and lover of heritage walks.",
     city: "Ahmedabad",
     interests: ["Design", "Coffee", "Art", "Architecture"],
-    likedCurrentUser: true, // Will match if liked
-  },
-  {
-    name: "Rohan Verma",
-    age: 25,
-    photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80",
-    bio: "Product designer by day, amateur chef by night. Looking for someone to test my homemade sourdough recipes on.",
-    city: "Mumbai",
-    interests: ["Cooking", "Design", "Fitness", "Podcasts"],
-    likedCurrentUser: false,
+    likedCurrentUser: true, // Mutual Match #2 (Consecutive!)
   },
   {
     name: "Ananya Iyer",
@@ -43,7 +35,18 @@ export const mockProfiles: SeedProfile[] = [
     bio: "Fintech analyst & classical Bharatanatyam dancer. Weekend hiker and avid reader of suspense thrillers.",
     city: "Chennai",
     interests: ["Dance", "Finance", "Reading", "Hiking"],
-    likedCurrentUser: true, // Will match if liked
+    likedCurrentUser: true, // Mutual Match #3 (Consecutive!)
+  },
+
+  // Cluster 2: Consecutive non-mutual likes (3 in a row -> tests Scenario 1: Consecutive Non-Matches)
+  {
+    name: "Rohan Verma",
+    age: 25,
+    photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80",
+    bio: "Product designer by day, amateur chef by night. Looking for someone to test my homemade sourdough recipes on.",
+    city: "Mumbai",
+    interests: ["Cooking", "Design", "Fitness", "Podcasts"],
+    likedCurrentUser: false, // Non-mutual #1
   },
   {
     name: "Kabir Mehta",
@@ -52,16 +55,7 @@ export const mockProfiles: SeedProfile[] = [
     bio: "Founder of a sustainable fashion startup. Marathon runner, dog dad to a golden retriever named Bruno.",
     city: "Delhi NCR",
     interests: ["Startups", "Running", "Dogs", "Sustainability"],
-    likedCurrentUser: false,
-  },
-  {
-    name: "Diya Patel",
-    age: 21,
-    photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
-    bio: "Psychology major. Big fan of retro rock, film photography, and board games on rainy weekends.",
-    city: "Pune",
-    interests: ["Music", "Photography", "Psychology", "Board Games"],
-    likedCurrentUser: true, // Will match if liked
+    likedCurrentUser: false, // Non-mutual #2 (Consecutive!)
   },
   {
     name: "Vikram Malhotra",
@@ -70,7 +64,18 @@ export const mockProfiles: SeedProfile[] = [
     bio: "Aerospace engineer. Stargazer, sci-fi geek, and certified scuba diver. Let's debate interstellar travel.",
     city: "Hyderabad",
     interests: ["Astronomy", "Scuba Diving", "Sci-Fi", "Chess"],
-    likedCurrentUser: false,
+    likedCurrentUser: false, // Non-mutual #3 (Consecutive!)
+  },
+
+  // Cluster 3: Pairs and mixed (tests Scenario 3: Alternating & Mixed)
+  {
+    name: "Diya Patel",
+    age: 21,
+    photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
+    bio: "Psychology major. Big fan of retro rock, film photography, and board games on rainy weekends.",
+    city: "Pune",
+    interests: ["Music", "Photography", "Psychology", "Board Games"],
+    likedCurrentUser: true, // Mutual Match #4
   },
   {
     name: "Meera Sen",
@@ -79,7 +84,7 @@ export const mockProfiles: SeedProfile[] = [
     bio: "Journalist covering culture and literature. Loves Kolkata book fairs, black coffee, and old-school jazz.",
     city: "Kolkata",
     interests: ["Writing", "Books", "Jazz", "Culture"],
-    likedCurrentUser: true, // Will match if liked
+    likedCurrentUser: true, // Mutual Match #5 (Consecutive!)
   },
   {
     name: "Arjun Reddy",
@@ -88,7 +93,7 @@ export const mockProfiles: SeedProfile[] = [
     bio: "Data scientist. Passionate about Formula 1, mechanical keyboards, and brewing the perfect pour-over.",
     city: "Bengaluru",
     interests: ["Formula 1", "Data Science", "Coffee", "Tech"],
-    likedCurrentUser: false,
+    likedCurrentUser: false, // Non-mutual #4
   },
   {
     name: "Sneha Mukherjee",
@@ -97,7 +102,7 @@ export const mockProfiles: SeedProfile[] = [
     bio: "UX researcher who believes good design makes people happier. Weekend pottery enthusiast and foodie.",
     city: "Gurugram",
     interests: ["UX Research", "Pottery", "Food", "Yoga"],
-    likedCurrentUser: true, // Will match if liked
+    likedCurrentUser: true, // Mutual Match #6
   },
   {
     name: "Siddharth Rao",
@@ -115,7 +120,7 @@ export const mockProfiles: SeedProfile[] = [
     bio: "Brand strategist & content creator. Obsessed with sunset picnics, thrifting vintage jackets, and podcasts.",
     city: "Mumbai",
     interests: ["Fashion", "Marketing", "Podcasts", "Travel"],
-    likedCurrentUser: true, // Will match if liked
+    likedCurrentUser: false, // Changed from true to test consecutive false
   },
   {
     name: "Aditya Deshmukh",
@@ -124,7 +129,7 @@ export const mockProfiles: SeedProfile[] = [
     bio: "Emergency room resident doctor. Balance chaos with classical piano, mountain biking, and good sushi.",
     city: "Mumbai",
     interests: ["Medicine", "Piano", "Cycling", "Sushi"],
-    likedCurrentUser: false,
+    likedCurrentUser: true, // Changed from false to true
   },
   {
     name: "Ishita Roy",
@@ -133,7 +138,7 @@ export const mockProfiles: SeedProfile[] = [
     bio: "Visual artist and botanical illustrator. Plant mom to 24 succulents and collector of vintage postcards.",
     city: "Jaipur",
     interests: ["Illustration", "Plants", "Art", "Vintage"],
-    likedCurrentUser: true, // Will match if liked
+    likedCurrentUser: true,
   },
   {
     name: "Varun Nair",
