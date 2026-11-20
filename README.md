@@ -6,13 +6,13 @@ A modern, mobile-first profile discovery web application inspired by Tinder and 
 
 ## Overview
 
-Coy Discover allows a logged-in demo user to discover nearby profiles, evaluate profiles with rich details, swipe using touch/mouse drag gestures, keyboard arrow shortcuts, or touch buttons, and experience instant celebratory matches when a mutual like occurs.
+Coy Discover allows a logged-in demo user to discover unswiped user profiles, evaluate profiles with rich details, swipe using touch/mouse drag gestures, keyboard arrow shortcuts, or touch buttons, and experience instant celebratory matches when a mutual like occurs.
 
 The application satisfies all assignment requirements:
 - **Two Main Navigation Tabs**: **Home** (a simple blank placeholder per assignment specification) and **Discover** (where all discovery, swiping, and match browsing occurs).
 - **Zero-Authentication Demo Mode**: Assumes a single logged-in user (`demo_user_001`) with complete session and refresh persistence.
 - **Strict Privacy Guarantee**: A user who has liked the demo user is **never** revealed unless the demo user also explicitly likes that profile.
-- **Full-Stack Persistence**: Every swipe and mutual match is permanently stored in MongoDB, ensuring swiped profiles never return upon page refresh.
+- **Full-Stack Persistence**: Every swipe and mutual match is persisted in MongoDB across page reloads and browser sessions, ensuring previously swiped profiles never return to the user's feed.
 
 ---
 
