@@ -1,340 +1,444 @@
-# Coy Discover – Full Stack Profile Discovery Web Application
+# Coy Discover
 
-A modern, mobile-first swipe-based profile discovery web application inspired by Tinder and Bumble, built as an SDE Intern technical assignment. Designed with an unwavering focus on **privacy protection**, clean full-stack architecture, persistent MongoDB storage, smooth Framer Motion drag gestures, and robust business logic.
-
----
-
-## 🌟 Live Demo & Architecture Highlights
-
-- **Privacy-First Matching:** Incoming likes are strictly confidential and stored backend-only. An individual who likes the current user is **never** revealed unless both users mutually like each other.
-- **Persistent Swipes & Matches:** Complete database persistence via MongoDB. A profile that has been liked or passed will never reappear in the user's feed across page reloads or new sessions.
-- **Mobile-First Gestures:** Framer Motion-powered touch & drag swipe gestures (swipe right to Like, swipe left to Pass) with dynamic stamp overlays and deck animations.
-- **"It's a Match!" Screen:** Celebratory match modal with confetti, dual avatar displays, and congratulatory messaging triggered only upon verified mutual likes.
-- **Mutual Matches View:** Dedicated section within Discover rendering confirmed matches fetched from the backend.
-- **Caught-Up Empty State:** Beautiful zero-state with a one-click demo reset feature to facilitate repeated evaluation without terminal commands.
+A modern, mobile-first profile discovery web application inspired by Tinder and Bumble, built as an SDE Intern technical assignment. Designed with an uncompromising focus on **privacy protection**, clean full-stack architecture, persistent MongoDB storage, physics-based gesture handling, and robust business logic.
 
 ---
 
-## 🛠️ Technology Stack
+## Overview
 
-| Layer | Technology | Details |
-|---|---|---|
-| **Framework** | **Next.js 14** (App Router) | Server-side rendering, Route Handlers, optimized asset bundling |
-| **Language** | **TypeScript** | Strict type safety across client, server, and database schemas |
-| **Styling** | **Tailwind CSS** | Modern color palette: deep violet, slate neutrals, emerald & rose accents |
-| **Animations** | **Framer Motion** & **Canvas Confetti** | Physics-based drag-and-drop swipe gestures and match celebrations |
-| **Icons** | **Lucide React** | Feather-light SVG icons |
-| **ODM / DB** | **Mongoose 8** / **MongoDB** | Schemas, compound unique indexing, and relations |
-| **Testing** | **Vitest** + **MongoDB Memory Server** | 13 automated tests covering all 8 business scenarios & API endpoints |
+Coy Discover allows a logged-in demo user to discover nearby profiles, evaluate profiles with rich details, swipe using touch/mouse drag gestures, keyboard arrow shortcuts, or touch buttons, and experience instant celebratory matches when a mutual like occurs.
+
+The application satisfies all assignment requirements:
+- **Two Main Navigation Tabs**: **Home** (a simple blank placeholder per assignment specification) and **Discover** (where all discovery, swiping, and match browsing occurs).
+- **Zero-Authentication Demo Mode**: Assumes a single logged-in user (`demo_user_001`) with complete session and refresh persistence.
+- **Strict Privacy Guarantee**: A user who has liked the demo user is **never** revealed unless the demo user also explicitly likes that profile.
+- **Full-Stack Persistence**: Every swipe and mutual match is permanently stored in MongoDB, ensuring swiped profiles never return upon page refresh.
 
 ---
 
-## 📐 Architecture Overview
+## Features
 
-```
+- **Gesture & Multi-Input Swiping**:
+  - Drag gestures on touch and mouse devices powered by Framer Motion.
+  - Keyboard controls (`ArrowRight` to Like, `ArrowLeft` to Pass).
+  - Touch-friendly on-screen Like (💚) and Pass (❌) action buttons.
+  - Dynamic visual stamps ("LIKE" in emerald and "NOPE" in rose) that respond during interaction.
+- **Instant Mutual Match Celebration**:
+  - Full-screen "It's a Match!" celebration modal with canvas confetti and dual avatar displays.
+  - Modal is triggered **only** after verified backend confirmation.
+- **Dedicated Mutual Matches View**:
+  - Secondary tab in Discover allowing users to browse all confirmed mutual matches.
+  - Displays match avatars, names, ages, cities, and timestamps.
+- **Sticky, Mobile-First Navigation**:
+  - Persistent sticky top navbar with active tab indicator and live matches counter badge.
+  - Fully responsive across mobile (320px–430px), tablet (768px), and desktop (1024px–1440px+).
+- **Caught-Up Empty State with One-Click Reset**:
+  - Clean zero-state when all profiles in the feed have been swiped.
+  - Includes a convenient "Reset Demo Swipes" button to facilitate rapid re-evaluation without terminal commands.
+- **Single Active Card Display**:
+  - Only one profile card is displayed and interactive at a time, backed by an underneath deck shadow card for depth.
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Frontend Framework** | **Next.js 14.2 (App Router)** | Server Components, Client Components, dynamic asset optimization |
+| **UI Library** | **React 18.3** | Component lifecycle, custom hooks, reactive state management |
+| **Language** | **TypeScript 5.7** | Strict end-to-end type safety across client, server, and database |
+| **Styling** | **Tailwind CSS 3.4** | Utility-first responsive styling with custom color schemes and safe-area padding |
+| **Animations** | **Framer Motion 11.15** | Physics-based card drag constraints, velocity thresholds, and presence exits |
+| **Celebrations** | **Canvas Confetti 1.9** | Celebratory particle confetti when mutual matches are confirmed |
+| **Icons** | **Lucide React 0.468** | Modern, accessible SVG icons |
+| **Backend Runtime** | **Node.js (Next.js Route Handlers)** | Server-side REST endpoints with JSON response contracts |
+| **Database & ODM** | **MongoDB & Mongoose 8.8** | Persistent document storage, schema validation, and compound unique indexing |
+| **Testing Framework** | **Vitest 2.1 & MongoMemoryServer** | Fast automated unit and integration tests with in-memory database isolation |
+
+---
+
+## Screenshots
+
+| Discover Feed | Swipe Experience |
+| :---: | :---: |
+| ![Discover Feed](./screenshots/discover.png) | ![Swipe Experience](./screenshots/swipe-experience.png) |
+
+| Mutual Match Modal | Matches Grid |
+| :---: | :---: |
+| ![Match Modal](./screenshots/match.png) | ![Matches Grid](./screenshots/matches.png) |
+
+| Mobile Viewport |
+| :---: |
+| ![Mobile Experience](./screenshots/mobile.png) |
+
+---
+
+## Architecture
+
+The project adheres to a clean separation of concerns between presentation, routing, domain business logic, and database persistence.
+
+```text
 coy-discover/
-├── app/
-│   ├── layout.tsx              # Root HTML shell, fonts, metadata
-│   ├── page.tsx                # Home tab (spec-compliant simple blank placeholder)
-│   ├── globals.css             # Tailwind directives and touch utilities
-│   │
-│   ├── discover/
-│   │   └── page.tsx            # Main Discover view (swipe deck, tabs, match modal)
-│   │
-│   └── api/
-│       ├── feed/
-│       │   └── route.ts        # GET /api/feed (excludes swiped, strips likedCurrentUser)
-│       ├── swipe/
-│       │   └── route.ts        # POST /api/swipe (records action, evaluates mutual match)
-│       ├── matches/
-│       │   └── route.ts        # GET /api/matches (returns mutual matches with profiles)
-│       └── reset/
-│           └── route.ts        # POST /api/reset (clears demo swipes/matches for testing)
-│
-├── components/
-│   ├── Navbar.tsx              # Responsive navigation header with active tab and match count
-│   ├── ProfileCard.tsx         # Framer Motion drag card, photo, bio, interest chips, stamps
-│   ├── SwipeButtons.tsx        # Desktop & mobile Pass (X) and Like (Heart) action buttons
-│   ├── MatchModal.tsx          # "IT'S A MATCH!" modal with dual avatars & confetti
-│   ├── MatchesList.tsx         # Responsive grid of mutual matches
-│   ├── EmptyState.tsx          # "You're all caught up!" empty state with Reset button
-│   └── LoadingState.tsx        # Skeleton pulse loader
-│
-├── lib/
-│   ├── mongodb.ts              # Cached Mongoose connection helper for Next.js hot-reloads
-│   ├── constants.ts            # Fixed demo user constants & branding configuration
-│   └── swipeService.ts         # Pure business logic: feed retrieval, swipe validation, matching
-│
-├── models/
-│   ├── Profile.ts              # Profile schema with backend-only likedCurrentUser
-│   ├── Swipe.ts                # Swipe schema with compound unique index (userId + profileId)
-│   └── Match.ts                # Match schema with compound unique index (userId + profileId)
-│
-├── scripts/
-│   ├── mockProfiles.ts         # 32 diverse, realistic mock profiles with photos and interests
-│   └── seed.ts                 # Idempotent database seeder with upsert logic
-│
-├── tests/
-│   ├── swipeService.test.ts    # 8 critical business logic & privacy scenario tests
-│   └── apiRoutes.test.ts       # 5 API route integration tests
-│
-├── .env.example                # Template for environment variables
-├── .env.local                  # Local development environment configuration
-├── tsconfig.json               # TypeScript compiler configuration
-├── tailwind.config.ts          # Tailwind theme tokens and extensions
-└── package.json
+├── app/                           # Next.js App Router
+│   ├── api/                       # Backend REST Route Handlers
+│   │   ├── feed/route.ts          # GET /api/feed (excludes swiped, strips likedCurrentUser)
+│   │   ├── swipe/route.ts         # POST /api/swipe (records swipe, evaluates match)
+│   │   ├── matches/route.ts       # GET /api/matches (returns mutual matches)
+│   │   └── reset/route.ts         # POST /api/reset (clears demo user history)
+│   ├── discover/page.tsx          # Discover & Matches screen (card deck, gestures, modal)
+│   ├── globals.css                # Global CSS directives and utility classes
+│   ├── layout.tsx                 # Root layout shell with sticky navigation wrapper
+│   └── page.tsx                   # Home tab (blank placeholder per assignment spec)
+├── components/                    # Reusable React UI Components
+│   ├── EmptyState.tsx             # Zero-state when feed is exhausted
+│   ├── LoadingState.tsx           # Skeleton loading state
+│   ├── MatchesList.tsx            # Grid display of confirmed mutual matches
+│   ├── MatchModal.tsx             # "It's a Match!" celebration modal with confetti
+│   ├── Navbar.tsx                 # Sticky navigation header with match counter
+│   ├── ProfileCard.tsx            # Profile card layout with photo, bio, and stamps
+│   └── SwipeButtons.tsx           # Like and Pass action buttons
+├── lib/                           # Core Business Logic & Shared Utilities
+│   ├── constants.ts               # Demo user constants and fallback assets
+│   ├── mongodb.ts                 # Cached Mongoose connection helper for Next.js
+│   └── swipeService.ts            # Domain matching engine, feed filter, and privacy rules
+├── models/                        # Mongoose Schemas & Database Models
+│   ├── Match.ts                   # Match schema with compound unique index
+│   ├── Profile.ts                 # Profile schema with select:false on likedCurrentUser
+│   └── Swipe.ts                   # Swipe schema with compound unique index
+├── public/                        # Static assets and screenshot assets
+├── screenshots/                   # Application screenshots for repository documentation
+├── scripts/                       # Database Seeding & Verification Scripts
+│   ├── mockProfiles.ts            # 32 unique Indian mock profiles with realistic data
+│   ├── seed.ts                    # Database seed execution script
+│   ├── verifyFrontendE2E.ts       # Automated UI test script
+│   ├── verifyLikeMatchE2E.ts      # Automated Like/Match verification script
+│   ├── verifyResponsive.ts        # Multi-viewport responsive audit script
+│   └── verifyStickyNav.ts         # Sticky navigation verification script
+├── tests/                         # Vitest Automated Test Suites
+│   ├── apiRoutes.test.ts          # API Route Handler integration tests
+│   ├── consecutiveSwipeScenarios.test.ts # Edge case & concurrency test suite
+│   └── swipeService.test.ts       # Business logic & privacy unit tests
+├── types/                         # TypeScript Interface Definitions
+│   └── index.ts                   # Core domain types and API contracts
+├── .env.example                   # Environment variable template
+├── package.json                   # NPM configuration and dependencies
+├── tailwind.config.ts             # Tailwind configuration
+├── tsconfig.json                  # TypeScript configuration
+└── vitest.config.ts               # Vitest runner configuration
 ```
 
 ---
 
-## 🗄️ Database Design
+## API Endpoints
 
-### 1. `Profile` Collection
-Stores discovery candidate profiles.
-- `name`: `String` (Required, trimmed)
-- `age`: `Number` (Required, 18–100)
-- `photo`: `String` (Required, high-resolution portrait URL)
-- `bio`: `String` (Required, max 500 chars)
-- `city`: `String` (Required, college or city)
-- `interests`: `[String]` (Badges)
-- `likedCurrentUser`: `Boolean` (**BACKEND ONLY** — strictly excluded from all public projections)
-- `createdAt` / `updatedAt`: `Timestamps`
-
-### 2. `Swipe` Collection
-Records user swipe interactions.
-- `userId`: `String` (Demo user identifier)
-- `profileId`: `ObjectId` (Ref to `Profile`)
-- `action`: `String` (`"like"` or `"pass"`)
-- `createdAt`: `Date`
-- **Unique Compound Index:** `{ userId: 1, profileId: 1 }` prevents duplicate swipes at the database engine level.
-
-### 3. `Match` Collection
-Stores confirmed mutual matches.
-- `userId`: `String`
-- `profileId`: `ObjectId` (Ref to `Profile`)
-- `createdAt`: `Date`
-- **Unique Compound Index:** `{ userId: 1, profileId: 1 }` guarantees idempotent match recording.
-
----
-
-## 🔒 Privacy & Business Logic Implementation
-
-### Core Matching Rule
-A mutual match is generated if and only if:
-$$\text{action} == \text{"like"} \quad \land \quad \text{profile.likedCurrentUser} == \text{true}$$
-
-### Privacy Safeguards
-1. **Frontend Ignorance:** The frontend has zero knowledge of `likedCurrentUser`. It cannot inspect network payloads, Redux/state variables, or DOM attributes to uncover who likes the user.
-2. **API Projection Stripping:** In `GET /api/feed`, `likedCurrentUser` and internal fields (`__v`) are explicitly stripped using Mongoose query exclusion (`.select("-likedCurrentUser -__v")`) and sanitization functions (`sanitizeProfile`).
-3. **One-Sided Pass Preservation:** When the demo user passes on a profile that has liked them, the pass is recorded in the database, `isMatch: false` is returned, and the profile is silently removed without exposing their admiration.
-4. **Duplicate Safeguards:** Concurrent or repeated swipe requests on the same profile return `HTTP 409 Conflict` and are rejected by MongoDB unique compound indexes.
-
----
-
-## 🌐 API Reference
+All route handlers are strictly typed and located under `app/api/`.
 
 ### 1. `GET /api/feed`
-Retrieves profiles that the current user has not yet swiped on.
-- **Privacy:** `likedCurrentUser` is completely stripped.
-- **Response `200 OK`:**
-```json
-{
-  "success": true,
-  "profiles": [
-    {
-      "id": "6afc989594a8684690b030ce",
-      "name": "Priya Nair",
-      "age": 22,
-      "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-      "bio": "Architecture student at CEPT. Coffee enthusiast, watercolor painter, and lover of heritage walks.",
-      "city": "Ahmedabad",
-      "interests": ["Design", "Coffee", "Art", "Architecture"]
-    }
-  ]
-}
-```
+Retrieves discovery feed profiles that the current user has not yet swiped on.
 
-### 2. `POST /api/swipe`
-Records a `like` or `pass` action and computes mutual match status.
-- **Request:**
-```json
-{
-  "profileId": "6afc989594a8684690b030ce",
-  "action": "like"
-}
-```
-- **Response (Mutual Match) `200 OK`:**
-```json
-{
-  "success": true,
-  "isMatch": true,
-  "match": {
-    "id": "6afc999694a8684690b030ed",
-    "profile": {
-      "id": "6afc989594a8684690b030ce",
-      "name": "Priya Nair",
-      "age": 22,
-      "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?...",
-      "city": "Ahmedabad",
-      "bio": "Architecture student at CEPT."
-    }
-  }
-}
-```
-- **Response (No Match / Pass) `200 OK`:**
-```json
-{
-  "success": true,
-  "isMatch": false
-}
-```
-- **Response (Duplicate Swipe) `409 Conflict`:**
-```json
-{
-  "success": false,
-  "error": "This profile has already been swiped on"
-}
-```
-
-### 3. `GET /api/matches`
-Retrieves all mutual matches belonging to the current demo user.
-- **Response `200 OK`:**
-```json
-{
-  "success": true,
-  "matches": [
-    {
-      "id": "6afc999694a8684690b030ed",
-      "userId": "demo_user_001",
-      "profileId": "6afc989594a8684690b030ce",
-      "createdAt": "2026-11-17T18:14:46.338Z",
-      "profile": {
-        "id": "6afc989594a8684690b030ce",
-        "name": "Priya Nair",
-        "age": 22,
-        "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?...",
-        "city": "Ahmedabad",
-        "bio": "Architecture student at CEPT.",
-        "interests": ["Design", "Coffee", "Art", "Architecture"]
+- **Headers**:
+  - `x-user-id` *(optional)*: User identifier (defaults to `demo_user_001`).
+- **Response `(200 OK)`**:
+  ```json
+  {
+    "success": true,
+    "profiles": [
+      {
+        "id": "6afc989594a8684690b030cd",
+        "name": "Aarav Sharma",
+        "age": 26,
+        "photo": "https://images.unsplash.com/...",
+        "bio": "Product designer who loves trekking and specialty coffee.",
+        "city": "Mumbai",
+        "interests": ["Design", "Trekking", "Coffee", "Photography"]
       }
-    }
-  ]
-}
-```
-
-### 4. `POST /api/reset`
-Utility endpoint to reset the demo user's swipes and matches without terminal access, making evaluation seamless.
+    ]
+  }
+  ```
+- **Privacy Enforcement**: `likedCurrentUser` is completely stripped by the query projection and sanitization layer.
 
 ---
 
-## 🚀 Setup & Local Execution
+### 2. `POST /api/swipe`
+Records a user swipe (`like` or `pass`), validates against duplicate submissions, and evaluates mutual matching conditions.
+
+- **Headers**:
+  - `x-user-id` *(optional)*: User identifier (defaults to `demo_user_001`).
+  - `x-request-id` *(optional)*: Tracing identifier for end-to-end request tracking.
+- **Request Body**:
+  ```json
+  {
+    "profileId": "6afc989594a8684690b030cd",
+    "action": "like"
+  }
+  ```
+- **Response `(200 OK - Mutual Match)`**:
+  ```json
+  {
+    "success": true,
+    "isMatch": true,
+    "match": {
+      "id": "6b002a4fccad272c2cbd24cc",
+      "profile": {
+        "id": "6afc989594a8684690b030cd",
+        "name": "Aarav Sharma",
+        "age": 26,
+        "photo": "https://images.unsplash.com/...",
+        "city": "Mumbai",
+        "bio": "Product designer who loves trekking and specialty coffee."
+      }
+    }
+  }
+  ```
+- **Response `(200 OK - No Match / Pass)`**:
+  ```json
+  {
+    "success": true,
+    "isMatch": false
+  }
+  ```
+- **Response `(409 Conflict - Duplicate Swipe)`**:
+  ```json
+  {
+    "success": false,
+    "error": "This profile has already been swiped on"
+  }
+  ```
+
+---
+
+### 3. `GET /api/matches`
+Returns all confirmed mutual matches for the acting user.
+
+- **Headers**:
+  - `x-user-id` *(optional)*: User identifier (defaults to `demo_user_001`).
+- **Response `(200 OK)`**:
+  ```json
+  {
+    "success": true,
+    "matches": [
+      {
+        "id": "6b002a4fccad272c2cbd24cc",
+        "userId": "demo_user_001",
+        "profileId": "6afc989594a8684690b030cd",
+        "createdAt": "2026-11-20T11:09:03.792Z",
+        "profile": {
+          "id": "6afc989594a8684690b030cd",
+          "name": "Aarav Sharma",
+          "age": 26,
+          "photo": "https://images.unsplash.com/...",
+          "bio": "Product designer who loves trekking and specialty coffee.",
+          "city": "Mumbai",
+          "interests": ["Design", "Trekking", "Coffee", "Photography"]
+        }
+      }
+    ]
+  }
+  ```
+
+---
+
+### 4. `POST /api/reset`
+Clears swipe history and mutual matches for the demo user without modifying the seeded profile catalog, allowing reviewers to restart testing cleanly.
+
+- **Response `(200 OK)`**:
+  ```json
+  {
+    "success": true,
+    "message": "Demo user history reset successfully"
+  }
+  ```
+
+---
+
+## Installation
 
 ### Prerequisites
-- **Node.js**: v18.18+ or v20+ (tested on v22.18.0)
-- **MongoDB**: Local MongoDB instance (`mongod`) or MongoDB Atlas connection string
+- **Node.js**: v18.17.0 or higher (v20+ recommended)
+- **MongoDB**: Local MongoDB instance (running on port `27017`) or a free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster URI.
+- **Git**
 
-### Step 1: Clone Repository
-```bash
-git clone https://github.com/your-username/coy-discover.git
-cd coy-discover
-```
+### Step-by-Step Setup
 
-### Step 2: Install Dependencies
-```bash
-npm install
-```
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/dhruv-yadav-49/coy-discover.git
+   cd coy-discover
+   ```
 
-### Step 3: Configure Environment Variables
-Create a `.env.local` file in the root directory:
-```bash
-cp .env.example .env.local
-```
-Ensure `MONGODB_URI` points to your running MongoDB instance:
+2. **Install project dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables**:
+   Copy the example environment file:
+   ```bash
+   cp .env.example .env.local
+   ```
+   *(On Windows PowerShell: `Copy-Item .env.example .env.local`)*
+
+---
+
+## Environment Variables
+
+Configure `.env.local` in the project root:
+
 ```env
+# MongoDB Connection String
+# Local MongoDB:
 MONGODB_URI=mongodb://127.0.0.1:27017/coy_discover
+
+# Or MongoDB Atlas:
+# MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/coy_discover?retryWrites=true&w=majority
+
+# Demo User ID (assumed single logged-in user per assignment specification)
 DEMO_USER_ID=demo_user_001
 ```
 
-### Step 4: Seed Database
-Seeds 32 unique, high-quality profiles across major cities and colleges with diverse interests:
-```bash
-npm run seed
-```
-*(To reset demo swipes while seeding, add `--reset-demo`: `npm run seed -- --reset-demo`)*
-
-### Step 5: Start the Development Server
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-- **Home Tab (`/`)**: Spec-mandated minimal placeholder.
-- **Discover Tab (`/discover`)**: Interactive discovery card stack with touch & button swiping.
-- **Matches Tab (`/discover#matches`)**: Mutual matches view.
+> **Security Note**: `.env.local` is listed in `.gitignore` and must never be committed to public version control.
 
 ---
 
-## 🧪 Automated Testing
+## Running the Project
 
-Run the Vitest test suite covering all critical business rules and integration scenarios:
+The available commands defined in `package.json` are:
+
+| Script | Command | Description |
+| :--- | :--- | :--- |
+| `seed` | `npm run seed` | Seeds 32 unique Indian mock profiles into MongoDB |
+| `dev` | `npm run dev` | Starts the Next.js development server at `http://localhost:3000` |
+| `build` | `npm run build` | Compiles the production-optimized Next.js build |
+| `start` | `npm run start` | Runs the compiled production server |
+| `lint` | `npm run lint` | Runs ESLint static analysis |
+| `test` | `npm test` | Runs the full Vitest automated test suite |
+
+### Standard Startup Flow
+
+1. **Seed the database with mock profiles**:
+   ```bash
+   npm run seed
+   ```
+   *To reset swipe history while seeding, run:*
+   ```bash
+   npm run seed -- --reset-demo
+   ```
+
+2. **Start the development server**:
+   ```bash
+   npm run dev
+   ```
+
+3. **Open the application**:
+   Open [http://localhost:3000](http://localhost:3000) in your browser. Navigate to the **Discover** tab to begin swiping.
+
+---
+
+## Running Tests
+
+Automated testing is configured using **Vitest** with **MongoMemoryServer** for isolated, zero-side-effect test runs.
+
+Run the entire test suite:
 ```bash
 npm test
 ```
 
-### Test Coverage Summary:
-- **Scenario 1:** Like profile without incoming like $\rightarrow$ swipe saved, no match, excluded from feed.
-- **Scenario 2:** Like profile with incoming like $\rightarrow$ swipe saved, match created in DB, returned in matches.
-- **Scenario 3:** Pass profile with incoming like $\rightarrow$ pass saved, no match, incoming like remains secret.
-- **Scenario 4:** Persistence across refresh $\rightarrow$ swiped profiles never return, matches remain intact.
-- **Scenario 5:** Duplicate swipe rejection $\rightarrow$ returns 409, duplicate DB writes blocked.
-- **Scenario 6:** Feed exhaustion $\rightarrow$ returns clean empty array.
-- **Scenario 7:** Privacy audit $\rightarrow$ verifies `likedCurrentUser` and `__v` never leak in GET `/api/feed`.
-- **Scenario 8:** Input validation $\rightarrow$ validates ObjectId format, enum actions (`like`/`pass`), and self-swipes.
-- **Scenario 9–13:** API Route Handlers integration tests (`GET /api/feed`, `POST /api/swipe`, `GET /api/matches`, `POST /api/reset`).
+### Test Coverage Summary (20 / 20 Tests Passing)
+
+1. **`tests/swipeService.test.ts` (8 Tests)**:
+   - Validates like and pass storage in the `swipes` collection.
+   - Confirms mutual match creation when `likedCurrentUser === true`.
+   - Ensures no match is created on pass, even if the other profile liked the user.
+   - Guarantees `likedCurrentUser` remains completely hidden.
+   - Rejects duplicate swipes on the same profile with status 409.
+   - Verifies empty array return when all profiles have been swiped.
+
+2. **`tests/consecutiveSwipeScenarios.test.ts` (6 Tests)**:
+   - Consecutive non-mutual likes (profiles that haven't liked the user).
+   - Consecutive mutual likes (back-to-back matches).
+   - Non-alternating independent profile processing.
+   - Concurrency protection: rapid simultaneous clicks rejected cleanly.
+   - Mixed action sequence: Like followed by Pass.
+   - Refresh persistence across simulated page reloads.
+
+3. **`tests/apiRoutes.test.ts` (6 Tests)**:
+   - End-to-end integration tests for `GET /api/feed`.
+   - End-to-end integration tests for `POST /api/swipe`.
+   - Duplicate rejection via HTTP status 409.
+   - End-to-end integration tests for `GET /api/matches`.
+   - End-to-end integration tests for `POST /api/reset`.
 
 ---
 
-## 📱 Navigation & UI/UX
+## Matching Logic
 
-1. **Home Tab (`/`)**: Intentionally kept as a clean, minimal placeholder as specified in the assignment prompt.
-2. **Discover Tab (`/discover`)**:
-   - Touch drag gestures: Drag right to LIKE (emerald stamp), drag left to PASS (rose stamp).
-   - Desktop action buttons: Pass (X) and Like (Heart) with subtle hover and active scaling.
-   - 3D Card Stack: Peeking card underneath that smoothly scales into view upon card exit.
-3. **"It's a Match!" Celebration**:
-   - Appears exclusively upon backend-confirmed mutual like.
-   - Plays colorful celebratory confetti via `canvas-confetti`.
-   - Side-by-side circular avatars with animated heart connector badge.
-   - Quick navigation into the Matches list or continue swiping.
-4. **Matches Section**:
-   - Grid layout with match timestamps, profile photos, age, city, bio, and interest tags.
-   - Proper empty state: *"No matches yet. Keep discovering and you might find someone special."*
-5. **Empty State**:
-   - When all profiles are swiped: *"You're all caught up!"*
-   - Includes a **"Reset Demo Feed"** button so evaluators can re-test immediately without running scripts.
+The matching engine is strictly server-driven and implemented in `lib/swipeService.ts`:
+
+$$\text{isMutualMatch} = (\text{action} == \text{"like"}) \land (\text{profile.likedCurrentUser} == \text{true})$$
+
+```typescript
+// 1. Fetch target profile with internal flag
+const profile = await Profile.findById(cleanProfileId).select("+likedCurrentUser");
+
+// 2. Prevent duplicate swipes
+const existingSwipe = await Swipe.findOne({ userId: cleanUserId, profileId: profile._id });
+if (existingSwipe) {
+  throw new ValidationError("This profile has already been swiped on", 409);
+}
+
+// 3. Persist the swipe record
+await Swipe.create({
+  userId: cleanUserId,
+  profileId: profile._id,
+  action: normalizedAction,
+});
+
+// 4. Evaluate mutual match condition
+const isMutualMatch = normalizedAction === "like" && profile.likedCurrentUser === true;
+
+// 5. If mutual, atomically record match
+if (isMutualMatch) {
+  await Match.findOneAndUpdate(
+    { userId: cleanUserId, profileId: profile._id },
+    { $setOnInsert: { userId: cleanUserId, profileId: profile._id, createdAt: new Date() } },
+    { upsert: true, new: true }
+  );
+}
+```
+
+### Business Rules Enforced
+1. **Pass Action**: If the user passes (`action === "pass"`), no match is created under any circumstances, even if `likedCurrentUser === true`.
+2. **One-Way Like**: If the user likes (`action === "like"`) but `likedCurrentUser === false`, the swipe is saved, but no match is created.
+3. **Mutual Like**: A match is created **only** when both users like each other.
+4. **Idempotence**: Database compound indices `{ userId: 1, profileId: 1 }` on both `swipes` and `matches` guarantee that duplicate swipes or duplicate matches can never be created, even under concurrent network requests.
 
 ---
 
-## ☁️ Deployment Instructions (Vercel + MongoDB Atlas)
+## Privacy Considerations
 
-1. **Database:**
-   - Create a free cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
-   - In Network Access, whitelist `0.0.0.0/0` (Allow Access from Anywhere).
-   - Copy your connection string: `mongodb+srv://<user>:<password>@cluster.mongodb.net/coy_discover?retryWrites=true&w=majority`.
-2. **Seed Remote Database:**
-   ```bash
-   MONGODB_URI="your-atlas-uri" npm run seed
+Privacy protection is the most critical business requirement of Coy Discover:
+
+1. **Schema-Level Field Protection**:
+   In `models/Profile.ts`, the `likedCurrentUser` boolean attribute is defined with `select: false`. Standard database queries (`Profile.find()`, `Profile.findById()`) will never include this field unless explicitly overridden via `.select("+likedCurrentUser")` inside internal backend service functions.
+
+2. **Data Sanitization Layer**:
+   Before sending any profile data to the client, documents pass through `sanitizeProfile()` in `lib/swipeService.ts`. This strictly projects only safe, public fields:
+   ```typescript
+   export function sanitizeProfile(profile: IProfileDocument | Record<string, unknown>): PublicProfile {
+     return {
+       id: doc._id.toString(),
+       name: doc.name,
+       age: doc.age,
+       photo: doc.photo,
+       bio: doc.bio,
+       city: doc.city,
+       interests: doc.interests || [],
+     };
+   }
    ```
-3. **Deploy to Vercel:**
-   - Push repository to GitHub.
-   - Import the repository on [Vercel](https://vercel.com).
-   - Under **Environment Variables**, set:
-     - `MONGODB_URI`: `your-atlas-uri`
-     - `DEMO_USER_ID`: `demo_user_001`
-   - Click **Deploy**.
 
----
+3. **Zero Frontend Guessing**:
+   The frontend possesses **zero awareness** of incoming likes before a swipe occurs. Match detection is never computed in the browser; the client displays the celebration modal only when the backend explicitly responds with `{ isMatch: true }`.
 
-## 📌 Known Limitations & Assumptions
-
-- **Demo Identity:** As explicitly mandated by the assignment guidelines, authentication is assumed with a fixed demo user identity (`demo_user_001`), bypassing third-party OAuth/JWT overhead.
-- **Chat & Messaging:** Explicitly out of scope per assignment prompt; matches view provides profile details without instant messaging.
+4. **Passed Profiles Kept Confidential**:
+   When a user passes a profile that secretly liked them, the pass is recorded, the profile is excluded from future discovery, and the incoming like remains permanently confidential.
